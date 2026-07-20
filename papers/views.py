@@ -1,13 +1,15 @@
 from collections import OrderedDict
 import json
+import logging
 from datetime import timedelta
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login
+from django.contrib.auth import views as auth_views
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.http import HttpResponseRedirect, JsonResponse
 from django.core.mail import send_mail
 from django.db.models import Case, IntegerField, When
 from django.shortcuts import get_object_or_404, redirect, render
@@ -27,6 +29,9 @@ from .models import ExtensionToken, Paper, PaperSummary, ReadingRecord, SearchHi
 from .services.ai import summarize_abstract
 from .services.pubmed import find_paper_for_extension, search_papers as pubmed_search
 from .tokens import authenticate_extension_token, issue_extension_token, revoke_extension_token
+
+
+logger = logging.getLogger(__name__)
 
 
 def home(request):
@@ -61,17 +66,30 @@ def username_recovery(request):
 
         if usernames:
             username_lines = "\n".join(f"- {username}" for username in usernames)
-            send_mail(
-                subject="[Paper Shelf] 가입 아이디 안내",
-                message=(
-                    "Paper Shelf에 가입된 아이디를 안내드립니다.\n\n"
-                    f"{username_lines}\n\n"
-                    "본인이 요청하지 않았다면 이 메일을 무시해도 됩니다."
-                ),
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[email],
-                fail_silently=False,
-            )
+            try:
+                send_mail(
+                    subject="[Paper Shelf] 가입 아이디 안내",
+                    message=(
+                        "Paper Shelf에 가입된 아이디를 안내드립니다.\n\n"
+                        f"{username_lines}\n\n"
+                        "본인이 요청하지 않았다면 이 메일을 무시해도 됩니다."
+                    ),
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[email],
+                    fail_silently=False,
+                )
+            except Exception:
+                logger.exception("Username recovery email delivery failed")
+                form.add_error(
+                    None,
+                    "메일 전송에 실패했습니다. 잠시 후 다시 시도해주세요.",
+                )
+                return render(
+                    request,
+                    "registration/username_recovery_form.html",
+                    {"form": form},
+                    status=503,
+                )
 
         # Do not reveal whether an account exists for this email.
         return redirect("username_recovery_done")
@@ -88,6 +106,32 @@ def username_recovery_done(request):
         return redirect("papers:search")
     return render(request, "registration/username_recovery_done.html")
 
+
+
+class SafePasswordResetView(auth_views.PasswordResetView):
+    """Show a useful form error instead of a generic HTTP 500 on email failure."""
+
+    def form_valid(self, form):
+        options = {
+            "use_https": self.request.is_secure(),
+            "token_generator": self.token_generator,
+            "from_email": self.from_email,
+            "email_template_name": self.email_template_name,
+            "subject_template_name": self.subject_template_name,
+            "request": self.request,
+            "html_email_template_name": self.html_email_template_name,
+            "extra_email_context": self.extra_email_context,
+        }
+        try:
+            form.save(**options)
+        except Exception:
+            logger.exception("Password reset email delivery failed")
+            form.add_error(
+                None,
+                "메일 전송에 실패했습니다. 잠시 후 다시 시도해주세요.",
+            )
+            return self.form_invalid(form)
+        return HttpResponseRedirect(self.get_success_url())
 
 def signup(request):
     if request.user.is_authenticated:

@@ -117,22 +117,27 @@ def _env_bool(name, default=False):
     return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
-# Local development prints recovery emails in the terminal unless SMTP is configured.
-# On Render, set EMAIL_HOST_USER and EMAIL_HOST_PASSWORD (Gmail app password).
+# Render Free blocks outbound SMTP ports. In production, use Brevo's HTTPS API.
+# Local development falls back to console output when no email provider is configured.
+BREVO_API_KEY = os.getenv("BREVO_API_KEY", "").strip()
+BREVO_SENDER_EMAIL = os.getenv("BREVO_SENDER_EMAIL", "").strip()
+BREVO_SENDER_NAME = os.getenv("BREVO_SENDER_NAME", "Paper Shelf").strip() or "Paper Shelf"
+
 EMAIL_HOST_USER = os.getenv(
     "EMAIL_HOST_USER", os.getenv("GMAIL_SENDER_EMAIL", "")
 ).strip()
 EMAIL_HOST_PASSWORD = os.getenv(
     "EMAIL_HOST_PASSWORD", os.getenv("GMAIL_APP_PASSWORD", "")
 ).replace(" ", "").strip()
-EMAIL_BACKEND = os.getenv(
-    "EMAIL_BACKEND",
-    (
-        "django.core.mail.backends.smtp.EmailBackend"
-        if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD
-        else "django.core.mail.backends.console.EmailBackend"
-    ),
-)
+
+if BREVO_API_KEY:
+    default_email_backend = "papers.email_backends.BrevoAPIBackend"
+elif EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:
+    default_email_backend = "django.core.mail.backends.smtp.EmailBackend"
+else:
+    default_email_backend = "django.core.mail.backends.console.EmailBackend"
+
+EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", default_email_backend)
 EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
 EMAIL_USE_TLS = _env_bool("EMAIL_USE_TLS", True)
@@ -140,7 +145,15 @@ EMAIL_USE_SSL = _env_bool("EMAIL_USE_SSL", False)
 EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "30"))
 DEFAULT_FROM_EMAIL = os.getenv(
     "DEFAULT_FROM_EMAIL",
-    f"Paper Shelf <{EMAIL_HOST_USER}>" if EMAIL_HOST_USER else "Paper Shelf <noreply@localhost>",
+    (
+        f"{BREVO_SENDER_NAME} <{BREVO_SENDER_EMAIL}>"
+        if BREVO_SENDER_EMAIL
+        else (
+            f"Paper Shelf <{EMAIL_HOST_USER}>"
+            if EMAIL_HOST_USER
+            else "Paper Shelf <noreply@localhost>"
+        )
+    ),
 )
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
