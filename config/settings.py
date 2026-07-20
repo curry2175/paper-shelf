@@ -109,6 +109,41 @@ LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "papers:search"
 LOGOUT_REDIRECT_URL = "home"
 
+
+def _env_bool(name, default=False):
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+# Local development prints recovery emails in the terminal unless SMTP is configured.
+# On Render, set EMAIL_HOST_USER and EMAIL_HOST_PASSWORD (Gmail app password).
+EMAIL_HOST_USER = os.getenv(
+    "EMAIL_HOST_USER", os.getenv("GMAIL_SENDER_EMAIL", "")
+).strip()
+EMAIL_HOST_PASSWORD = os.getenv(
+    "EMAIL_HOST_PASSWORD", os.getenv("GMAIL_APP_PASSWORD", "")
+).replace(" ", "").strip()
+EMAIL_BACKEND = os.getenv(
+    "EMAIL_BACKEND",
+    (
+        "django.core.mail.backends.smtp.EmailBackend"
+        if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD
+        else "django.core.mail.backends.console.EmailBackend"
+    ),
+)
+EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
+EMAIL_USE_TLS = _env_bool("EMAIL_USE_TLS", True)
+EMAIL_USE_SSL = _env_bool("EMAIL_USE_SSL", False)
+EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "30"))
+DEFAULT_FROM_EMAIL = os.getenv(
+    "DEFAULT_FROM_EMAIL",
+    f"Paper Shelf <{EMAIL_HOST_USER}>" if EMAIL_HOST_USER else "Paper Shelf <noreply@localhost>",
+)
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
+
 NCBI_EMAIL = os.getenv("NCBI_EMAIL", "")
 NCBI_TOOL_NAME = os.getenv("NCBI_TOOL_NAME", "paper_shelf_django")
 NCBI_API_KEY = os.getenv("NCBI_API_KEY", "")

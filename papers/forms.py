@@ -62,3 +62,18 @@ class ReadingRecordForm(forms.ModelForm):
                 }
             ),
         }
+
+
+class UsernameRecoveryForm(forms.Form):
+    email = forms.EmailField(
+        label="가입할 때 사용한 이메일",
+        widget=forms.EmailInput(
+            attrs={
+                "placeholder": "name@example.com",
+                "autocomplete": "email",
+            }
+        ),
+    )
+
+    def clean_email(self):
+        return self.cleaned_data["email"].strip().lower()

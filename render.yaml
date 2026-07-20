@@ -1,16 +1,43 @@
-{% extends 'base.html' %}
-{% block title %}회원가입 — Paper Shelf{% endblock %}
-{% block content %}
-<section class="auth-card">
-  <p class="eyebrow">START YOUR SHELF</p>
-  <h1>회원가입</h1>
-  <p class="muted">
-    현재 버전은 일반 계정으로 시작하며, 다음 단계에서 Google 로그인을 연결합니다.
-  </p>
-  <form method="post" class="stack-form">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button class="button primary" type="submit">책장 만들기</button>
-  </form>
-</section>
-{% endblock %}
+services:
+  - type: web
+    name: paper-shelf
+    runtime: python
+    plan: free
+    buildCommand: bash build.sh
+    startCommand: gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+    healthCheckPath: /health/
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: DATABASE_URL
+        sync: false
+      - key: NCBI_EMAIL
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: EMAIL_BACKEND
+        value: django.core.mail.backends.smtp.EmailBackend
+      - key: EMAIL_HOST
+        value: smtp.gmail.com
+      - key: EMAIL_PORT
+        value: "587"
+      - key: EMAIL_USE_TLS
+        value: "True"
+      - key: EMAIL_HOST_USER
+        sync: false
+      - key: EMAIL_HOST_PASSWORD
+        sync: false
+      - key: DEFAULT_FROM_EMAIL
+        sync: false
+      - key: NCBI_TOOL_NAME
+        value: paper_shelf_django
+      - key: GEMINI_MODEL
+        value: gemini-3.1-flash-lite
+      - key: ALLOWED_HOSTS
+        value: .onrender.com
+      - key: CSRF_TRUSTED_ORIGINS
+        value: https://*.onrender.com

@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}아이디 찾기 — Paper Shelf{% endblock %}
+{% block content %}
+<section class="auth-card">
+  <p class="eyebrow">FIND USERNAME</p>
+  <h1>아이디 찾기</h1>
+  <p class="muted">회원가입 때 사용한 이메일을 입력하세요. 계정이 확인되면 아이디 안내 메일을 보냅니다.</p>
+  <form method="post" class="stack-form">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button class="button primary" type="submit">아이디 안내 메일 받기</button>
+  </form>
+  <p class="muted auth-back"><a href="{% url 'account_recovery' %}">계정 복구로 돌아가기</a></p>
+</section>
+{% endblock %}

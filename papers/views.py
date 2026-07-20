@@ -5,8 +5,10 @@ from datetime import timedelta
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login
+from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
+from django.core.mail import send_mail
 from django.db.models import Case, IntegerField, When
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -15,7 +17,12 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods, require_POST
 
-from .forms import PaperSearchForm, ReadingRecordForm, SignupForm
+from .forms import (
+    PaperSearchForm,
+    ReadingRecordForm,
+    SignupForm,
+    UsernameRecoveryForm,
+)
 from .models import ExtensionToken, Paper, PaperSummary, ReadingRecord, SearchHistory
 from .services.ai import summarize_abstract
 from .services.pubmed import find_paper_for_extension, search_papers as pubmed_search
@@ -31,6 +38,55 @@ def home(request):
             "reading_count": ReadingRecord.objects.count(),
         },
     )
+
+
+def account_recovery(request):
+    if request.user.is_authenticated:
+        return redirect("papers:search")
+    return render(request, "registration/account_recovery.html")
+
+
+def username_recovery(request):
+    if request.user.is_authenticated:
+        return redirect("papers:search")
+
+    form = UsernameRecoveryForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        email = form.cleaned_data["email"]
+        usernames = list(
+            User.objects.filter(email__iexact=email, is_active=True)
+            .order_by("date_joined")
+            .values_list("username", flat=True)
+        )
+
+        if usernames:
+            username_lines = "\n".join(f"- {username}" for username in usernames)
+            send_mail(
+                subject="[Paper Shelf] 가입 아이디 안내",
+                message=(
+                    "Paper Shelf에 가입된 아이디를 안내드립니다.\n\n"
+                    f"{username_lines}\n\n"
+                    "본인이 요청하지 않았다면 이 메일을 무시해도 됩니다."
+                ),
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[email],
+                fail_silently=False,
+            )
+
+        # Do not reveal whether an account exists for this email.
+        return redirect("username_recovery_done")
+
+    return render(
+        request,
+        "registration/username_recovery_form.html",
+        {"form": form},
+    )
+
+
+def username_recovery_done(request):
+    if request.user.is_authenticated:
+        return redirect("papers:search")
+    return render(request, "registration/username_recovery_done.html")
 
 
 def signup(request):

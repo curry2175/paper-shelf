@@ -114,3 +114,47 @@ class ExtensionApiTests(TestCase):
         response = self.client.options(self.endpoint)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Access-Control-Allow-Origin"], "*")
+
+
+from django.core import mail
+from django.test import override_settings
+
+
+@override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+class AccountRecoveryTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="forgotten-reader",
+            email="forgotten@example.com",
+            password="old-password-123",
+        )
+
+    def test_login_page_links_to_account_recovery(self):
+        response = self.client.get(reverse("login"))
+        self.assertContains(response, reverse("account_recovery"))
+
+    def test_username_recovery_sends_username_by_email(self):
+        response = self.client.post(
+            reverse("username_recovery"),
+            {"email": self.user.email},
+        )
+        self.assertRedirects(response, reverse("username_recovery_done"))
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(self.user.username, mail.outbox[0].body)
+
+    def test_username_recovery_does_not_reveal_unknown_email(self):
+        response = self.client.post(
+            reverse("username_recovery"),
+            {"email": "unknown@example.com"},
+        )
+        self.assertRedirects(response, reverse("username_recovery_done"))
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_password_reset_sends_one_time_link(self):
+        response = self.client.post(
+            reverse("password_reset"),
+            {"email": self.user.email},
+        )
+        self.assertRedirects(response, reverse("password_reset_done"))
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn("/account/reset/", mail.outbox[0].body)

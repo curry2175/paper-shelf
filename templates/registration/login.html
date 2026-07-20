@@ -9,6 +9,9 @@
     {{ form.as_p }}
     <button class="button primary" type="submit">로그인</button>
   </form>
-  <p class="muted">계정이 없나요? <a href="{% url 'signup' %}">회원가입</a></p>
+  <div class="auth-links">
+    <a href="{% url 'account_recovery' %}">아이디 또는 비밀번호를 잊으셨나요?</a>
+    <span>계정이 없나요? <a href="{% url 'signup' %}">회원가입</a></span>
+  </div>
 </section>
 {% endblock %}
