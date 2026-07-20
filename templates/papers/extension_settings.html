@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block title %}Chrome 확장 프로그램 — Paper Shelf{% endblock %}
+{% block content %}
+<section class="page-heading extension-heading">
+  <div>
+    <p class="eyebrow">CHROME EXTENSION</p>
+    <h1>읽은 논문을 한 번에 책장으로</h1>
+    <p>PubMed나 저널 페이지에서 Paper Shelf 버튼을 눌러 읽은 날짜와 메모를 저장합니다.</p>
+  </div>
+</section>
+
+<div class="extension-grid">
+  <section class="panel extension-panel">
+    <p class="step-number">01</p>
+    <h2>확장 프로그램 설치</h2>
+    <p><code>chrome_extension</code> 폴더를 Chrome의 압축해제된 확장 프로그램으로 불러옵니다.</p>
+    <ol>
+      <li>Chrome 주소창에 <code>chrome://extensions</code> 입력</li>
+      <li>오른쪽 위 <strong>개발자 모드</strong> 켜기</li>
+      <li><strong>압축해제된 확장 프로그램을 로드합니다</strong> 선택</li>
+      <li>프로젝트 안의 <code>chrome_extension</code> 폴더 선택</li>
+    </ol>
+  </section>
+
+  <section class="panel extension-panel">
+    <p class="step-number">02</p>
+    <h2>웹사이트 주소 입력</h2>
+    <p>확장 프로그램 설정 화면의 웹사이트 주소에 아래 값을 붙여넣습니다.</p>
+    <div class="copy-box">
+      <code id="site-url">{{ site_url }}</code>
+      <button type="button" class="button small secondary" data-copy="site-url">복사</button>
+    </div>
+  </section>
+
+  <section class="panel extension-panel token-panel">
+    <p class="step-number">03</p>
+    <h2>연결 토큰 발급</h2>
+    <p>토큰은 확장 프로그램이 어느 사용자의 책장에 저장할지 확인하는 비밀 연결 코드입니다.</p>
+
+    {% if generated_token %}
+      <div class="token-warning">이 토큰은 지금 한 번만 표시됩니다. 확장 프로그램 설정에 저장해주세요.</div>
+      <div class="copy-box token-copy">
+        <code id="extension-token">{{ generated_token }}</code>
+        <button type="button" class="button small secondary" data-copy="extension-token">복사</button>
+      </div>
+    {% elif token_record %}
+      <div class="token-status active">
+        연결 토큰이 발급되어 있습니다.
+        {% if token_record.last_used_at %}
+          <span>마지막 사용: {{ token_record.last_used_at|date:'Y.m.d H:i' }}</span>
+        {% endif %}
+      </div>
+    {% else %}
+      <div class="token-status">아직 연결 토큰이 없습니다.</div>
+    {% endif %}
+
+    <div class="token-actions">
+      <form method="post" action="{% url 'papers:generate_extension_token' %}">
+        {% csrf_token %}
+        <button class="button primary" type="submit">
+          {% if token_record %}새 토큰으로 교체{% else %}연결 토큰 만들기{% endif %}
+        </button>
+      </form>
+      {% if token_record %}
+        <form method="post" action="{% url 'papers:revoke_extension_token' %}">
+          {% csrf_token %}
+          <button class="button danger-button" type="submit">연결 해제</button>
+        </form>
+      {% endif %}
+    </div>
+  </section>
+</div>
+
+<section class="panel extension-howto">
+  <div>
+    <p class="eyebrow">HOW IT WORKS</p>
+    <h2>논문을 다 읽은 뒤</h2>
+  </div>
+  <div class="howto-flow">
+    <span>논문 페이지 열기</span><b>→</b><span>Chrome의 📚 버튼</span><b>→</b><span>읽음 완료</span><b>→</b><span>내 책장에 한 권 추가</span>
+  </div>
+  <p class="muted">첫 버전은 PubMed 페이지에서 가장 정확하게 작동하며, DOI 메타데이터가 있는 주요 저널 페이지도 지원합니다.</p>
+</section>
+
+<script>
+document.querySelectorAll('[data-copy]').forEach((button) => {
+  button.addEventListener('click', async () => {
+    const target = document.getElementById(button.dataset.copy);
+    await navigator.clipboard.writeText(target.textContent.trim());
+    const original = button.textContent;
+    button.textContent = '복사됨';
+    setTimeout(() => { button.textContent = original; }, 1300);
+  });
+});
+</script>
+{% endblock %}

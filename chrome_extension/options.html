@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Paper Shelf 연결 설정</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main>
+    <p class="eyebrow">PAPER SHELF EXTENSION</p>
+    <h1>웹사이트와 연결</h1>
+    <p class="intro">Paper Shelf 웹사이트의 ‘확장 프로그램’ 페이지에서 주소와 연결 토큰을 복사해 입력하세요.</p>
+
+    <label for="site-url">Paper Shelf 웹사이트 주소</label>
+    <input id="site-url" type="url" placeholder="http://127.0.0.1:8000 또는 https://...onrender.com">
+
+    <label for="api-token">연결 토큰</label>
+    <input id="api-token" type="password" placeholder="ps_로 시작하는 연결 토큰">
+
+    <button id="save-button">설정 저장</button>
+    <div id="status" role="status"></div>
+    <p class="notice">연결 토큰은 Chrome의 확장 프로그램 전용 저장소에 보관됩니다. 다른 사람과 공유하지 마세요.</p>
+  </main>
+  <script src="options.js"></script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% load paper_extras %}
+{% block title %}내 논문 책장 — Paper Shelf{% endblock %}
+{% block content %}
+<section class="page-heading bookshelf-heading">
+  <div>
+    <p class="eyebrow">MY READING SHELF</p>
+    <h1>{{ user.username }}의 논문 책장</h1>
+    <p>읽은 논문이 한 권씩 쌓입니다.</p>
+  </div>
+  <a class="button primary" href="{% url 'papers:search' %}">새 논문 찾기</a>
+</section>
+
+<section class="stats-grid">
+  <div><strong>{{ total_count }}</strong><span>전체 논문</span></div>
+  <div><strong>{{ month_count }}</strong><span>이번 달</span></div>
+  <div><strong>{{ streak }}</strong><span>연속 독서일</span></div>
+  <div><strong>{{ journal_count }}</strong><span>탐색한 저널</span></div>
+</section>
+
+{% for group in grouped_records %}
+  <section class="shelf-section">
+    <h2>{{ group.label }}</h2>
+    <div class="books-row">
+      {% for record in group.records %}
+        <a class="book-spine"
+           style="--book-hue: {{ record.paper.pmid|book_hue }}"
+           href="{% url 'papers:detail' record.paper.pk %}"
+           title="{{ record.paper.title }}">
+          <span class="book-title">{{ record.paper.title }}</span>
+          <span class="book-journal">{{ record.paper.journal|truncatechars:18 }}</span>
+          <span class="book-date">{{ record.read_at|date:'m.d' }}</span>
+        </a>
+      {% endfor %}
+    </div>
+    <div class="shelf-board"></div>
+  </section>
+{% empty %}
+  <section class="empty-state">
+    <h2>아직 책장이 비어 있습니다.</h2>
+    <p>논문을 읽은 뒤 ‘읽음 완료’를 누르면 첫 번째 책이 생깁니다.</p>
+    <a class="button primary" href="{% url 'papers:search' %}">첫 논문 찾기</a>
+  </section>
+{% endfor %}
+{% endblock %}

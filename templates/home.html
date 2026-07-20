@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Paper Shelf — 논문을 한 권씩{% endblock %}
+{% block content %}
+<section class="hero">
+  <div>
+    <p class="eyebrow">RESEARCH READING COMPANION</p>
+    <h1>논문을 읽는 일이<br>책장을 채우는 경험이 되도록.</h1>
+    <p class="hero-copy">
+      관심 분야의 PubMed 논문을 찾고, 초보자용 설명을 확인한 뒤
+      읽은 논문을 나만의 책장에 쌓아보세요.
+    </p>
+    <div class="hero-actions">
+      {% if user.is_authenticated %}
+        <a class="button primary" href="{% url 'papers:search' %}">논문 찾아보기</a>
+        <a class="button secondary" href="{% url 'papers:bookshelf' %}">내 책장 열기</a>
+      {% else %}
+        <a class="button primary" href="{% url 'signup' %}">무료로 시작하기</a>
+        <a class="button secondary" href="{% url 'login' %}">로그인</a>
+      {% endif %}
+    </div>
+  </div>
+  <div class="hero-shelf" aria-hidden="true">
+    <div class="demo-book b1">CAA</div>
+    <div class="demo-book b2">MASLD</div>
+    <div class="demo-book b3">CLL</div>
+    <div class="demo-book b4">AI</div>
+    <div class="demo-book b5">Stroke</div>
+    <div class="shelf-board"></div>
+  </div>
+</section>
+<section class="feature-grid">
+  <article><span>01</span><h2>PubMed 검색</h2><p>키워드와 기간을 입력해 최신 논문을 바로 찾습니다.</p></article>
+  <article><span>02</span><h2>쉬운 AI 설명</h2><p>Abstract에 적힌 정보만 사용해 연구 질문과 핵심 결과를 풀어줍니다.</p></article>
+  <article><span>03</span><h2>나만의 논문 책장</h2><p>읽은 날짜, 메모, 별점과 함께 논문을 한 권씩 쌓습니다.</p></article>
+</section>
+{% endblock %}

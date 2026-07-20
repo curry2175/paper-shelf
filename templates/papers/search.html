@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% block title %}논문 찾기 — Paper Shelf{% endblock %}
+{% block content %}
+<section class="page-heading">
+  <p class="eyebrow">DISCOVER</p>
+  <h1>관심 분야의 새 논문 찾기</h1>
+  <p>PubMed 등록일을 기준으로 최근 논문을 검색합니다.</p>
+</section>
+
+<div class="content-grid">
+  <section class="panel">
+    <form method="post" class="search-form">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button class="button primary" type="submit">PubMed 검색</button>
+    </form>
+    {% if recent_searches %}
+      <div class="recent-searches">
+        <h3>최근 검색</h3>
+        {% for item in recent_searches %}<span>{{ item.keyword }}</span>{% endfor %}
+      </div>
+    {% endif %}
+  </section>
+  <aside class="tip-card">
+    <strong>검색 팁</strong>
+    <p><code>CAA AND retina</code>처럼 PubMed 연산자를 그대로 사용할 수 있습니다.</p>
+  </aside>
+</div>
+
+{% if search_period %}
+  <p class="result-meta">
+    {{ search_period.0 }}부터 {{ search_period.1 }}까지 · {{ results|length }}편
+  </p>
+{% endif %}
+
+<section class="paper-list">
+{% for paper in results %}
+  <article class="paper-card">
+    <div class="paper-meta">
+      {{ paper.journal|default:'저널 정보 없음' }} ·
+      {{ paper.publication_date|default:'날짜 정보 없음' }} · PMID {{ paper.pmid }}
+    </div>
+    <h2><a href="{% url 'papers:detail' paper.pk %}">{{ paper.title }}</a></h2>
+    <p class="authors">{{ paper.authors }}</p>
+
+    {% if paper.summary.status == 'success' %}
+      <div class="takeaway">
+        <strong>한 문장으로</strong>
+        {{ paper.summary.beginner_takeaway }}
+      </div>
+    {% endif %}
+
+    <details>
+      <summary>Abstract 보기</summary>
+      <p class="abstract">
+        {{ paper.abstract|default:'PubMed에 Abstract가 없습니다.'|linebreaksbr }}
+      </p>
+    </details>
+
+    <div class="card-actions">
+      <a class="button small secondary" href="{% url 'papers:detail' paper.pk %}">상세 보기</a>
+      {% if paper.abstract %}
+        <form method="post" action="{% url 'papers:summarize' paper.pk %}">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{% url 'papers:detail' paper.pk %}">
+          <button class="button small" type="submit">
+            {% if paper.summary.status == 'success' %}요약 다시 만들기{% else %}AI 요약 만들기{% endif %}
+          </button>
+        </form>
+      {% endif %}
+
+      {% if paper.pk in read_paper_ids %}
+        <span class="read-badge">책장에 있음</span>
+      {% else %}
+        <form method="post" action="{% url 'papers:mark_read' paper.pk %}">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{% url 'papers:detail' paper.pk %}">
+          <button class="button small primary" type="submit">읽음 완료</button>
+        </form>
+      {% endif %}
+    </div>
+  </article>
+{% empty %}
+  {% if request.method == 'POST' %}<div class="empty-state">검색 결과가 없습니다.</div>{% endif %}
+{% endfor %}
+</section>
+{% endblock %}

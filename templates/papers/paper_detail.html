@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% block title %}{{ paper.title }} — Paper Shelf{% endblock %}
+{% block content %}
+<article class="detail-page">
+  <a class="back-link" href="{% url 'papers:search' %}">← 검색으로 돌아가기</a>
+  <div class="paper-meta">
+    {{ paper.journal }} · {{ paper.publication_date }} · PMID {{ paper.pmid }}
+  </div>
+  <h1>{{ paper.title }}</h1>
+  <p class="authors">{{ paper.authors }}</p>
+
+  <div class="card-actions">
+    <a class="button secondary" href="{{ paper.pubmed_url }}" target="_blank" rel="noopener">PubMed 원문</a>
+    {% if not record %}
+      <form method="post" action="{% url 'papers:mark_read' paper.pk %}">
+        {% csrf_token %}
+        <input type="hidden" name="source_url" value="{{ paper.pubmed_url }}">
+        <input type="hidden" name="next" value="{% url 'papers:detail' paper.pk %}">
+        <button class="button primary" type="submit">읽음 완료 · 책장에 추가</button>
+      </form>
+    {% endif %}
+  </div>
+
+  <section class="detail-section">
+    <h2>Abstract</h2>
+    <p class="abstract">{{ paper.abstract|default:'PubMed에 Abstract가 없습니다.'|linebreaksbr }}</p>
+  </section>
+
+  <section class="detail-section summary-section">
+    <div class="section-title-row">
+      <h2>초보자용 AI 설명</h2>
+      {% if paper.abstract %}
+        <form method="post" action="{% url 'papers:summarize' paper.pk %}">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{% url 'papers:detail' paper.pk %}">
+          <button class="button small" type="submit">
+            {% if paper.summary.status == 'success' %}다시 생성{% else %}요약 생성{% endif %}
+          </button>
+        </form>
+      {% endif %}
+    </div>
+
+    {% if paper.summary.status == 'success' %}
+      <div class="summary-grid">
+        <div><h3>무엇을 물었나요?</h3><p>{{ paper.summary.research_question }}</p></div>
+        <div><h3>왜 중요한가요?</h3><p>{{ paper.summary.why_it_matters }}</p></div>
+        <div><h3>어떤 연구인가요?</h3><p>{{ paper.summary.study_design }}</p></div>
+        <div><h3>연구 대상</h3><p>{{ paper.summary.study_population }}</p></div>
+      </div>
+      <h3>핵심 결과</h3>
+      <ul>{% for item in paper.summary.main_results %}<li>{{ item }}</li>{% endfor %}</ul>
+      <div class="easy-box"><strong>쉽게 설명하면</strong><p>{{ paper.summary.easy_explanation }}</p></div>
+      <h3>주의할 점</h3>
+      <ul>{% for item in paper.summary.limitations %}<li>{{ item }}</li>{% endfor %}</ul>
+      <blockquote>{{ paper.summary.beginner_takeaway }}</blockquote>
+      <h3>어려운 용어</h3>
+      <ul>{% for item in paper.summary.difficult_terms %}<li>{{ item }}</li>{% endfor %}</ul>
+      <p class="notice">이 설명은 PubMed Abstract만을 기반으로 합니다.</p>
+    {% elif paper.summary.status == 'failed' %}
+      <p class="error-box">이전 요약 실패: {{ paper.summary.error_message }}</p>
+    {% else %}
+      <p class="empty-copy">아직 요약이 없습니다. 요약 생성 버튼을 눌러보세요.</p>
+    {% endif %}
+  </section>
+
+  {% if record %}
+    <section class="detail-section reading-note">
+      <div class="section-title-row">
+        <h2>내 독서 기록</h2>
+        <span class="read-badge">{{ record.read_at|date:'Y.m.d H:i' }} 읽음</span>
+      </div>
+      <form method="post" action="{% url 'papers:update_reading' paper.pk %}" class="stack-form">
+        {% csrf_token %}
+        {{ record_form.as_p }}
+        <button class="button primary" type="submit">기록 저장</button>
+      </form>
+      <form method="post" action="{% url 'papers:remove_reading' paper.pk %}" class="danger-form">
+        {% csrf_token %}
+        <button class="link-button danger" type="submit">책장에서 제거</button>
+      </form>
+    </section>
+  {% endif %}
+</article>
+{% endblock %}

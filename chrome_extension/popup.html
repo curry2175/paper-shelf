@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Paper Shelf</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main>
+    <header>
+      <div class="logo">📚</div>
+      <div><strong>Paper Shelf</strong><small>읽은 논문 저장</small></div>
+    </header>
+
+    <section id="paper-box" class="paper-box loading">
+      <div id="paper-title">현재 논문을 확인하고 있습니다.</div>
+      <div id="paper-meta"></div>
+    </section>
+
+    <label for="note">한 줄 메모 <span>선택</span></label>
+    <textarea id="note" rows="3" placeholder="기억하고 싶은 내용이나 다음 연구 아이디어"></textarea>
+
+    <button id="save-button" class="primary" disabled>읽음 완료 · 책장에 추가</button>
+    <button id="bookshelf-button" class="secondary" hidden>내 책장 열기</button>
+    <button id="settings-button" class="link">연결 설정</button>
+
+    <div id="status" role="status"></div>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>
