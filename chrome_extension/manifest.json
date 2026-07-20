@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Paper Shelf",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "읽은 의학 논문을 Paper Shelf 책장에 저장합니다.",
   "permissions": [
     "activeTab",
