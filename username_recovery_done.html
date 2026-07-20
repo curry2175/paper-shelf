@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}로그인 — Paper Shelf{% endblock %}
+{% block content %}
+<section class="auth-card">
+  <p class="eyebrow">WELCOME BACK</p>
+  <h1>로그인</h1>
+  <form method="post" class="stack-form">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button class="button primary" type="submit">로그인</button>
+  </form>
+  <div class="auth-links">
+    <a href="{% url 'account_recovery' %}">아이디 또는 비밀번호를 잊으셨나요?</a>
+    <span>계정이 없나요? <a href="{% url 'signup' %}">회원가입</a></span>
+  </div>
+</section>
+{% endblock %}

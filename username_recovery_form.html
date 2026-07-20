@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}비밀번호 변경 완료 — Paper Shelf{% endblock %}
+{% block content %}
+<section class="auth-card">
+  <p class="eyebrow">PASSWORD UPDATED</p>
+  <h1>비밀번호가 변경되었습니다</h1>
+  <p>새 비밀번호로 Paper Shelf에 로그인할 수 있습니다.</p>
+  <a class="button primary" href="{% url 'login' %}">로그인하기</a>
+</section>
+{% endblock %}
